@@ -114,7 +114,7 @@ a {
 
 /* Containers */
 .slide-container {
-  display: none;
+  /* display: none; */
   width: 100vw;
   height: 100vh;
   height: 100dvh;
@@ -646,7 +646,7 @@ a {
 }
 
 .inspiration-image {
-  width: 100%;
+  width: fit-content;
   height: 100%;
   display: inline-block;
   position: relative;
