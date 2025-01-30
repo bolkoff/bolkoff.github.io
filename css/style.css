@@ -31,6 +31,8 @@
   --black-brand-color-rgb: 0, 0, 0;
   --blue-brand-color: #007296;
   --text-light-color: white;
+  --text-secondary-color: rgb(230, 230, 230);
+  --text-light-color-hover: rgba(255, 255, 255, 0.8);
   --navbar-light-icons: white;
   --section_sand-color: rgba(247, 207, 152, 0.3);
 
@@ -42,16 +44,14 @@
   --round-border: 0px none 25px;
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
 a {
   text-decoration: none;
   color: inherit;
+}
+
+/* hide img's alt text */
+img:not([src]):not([srcset]) {
+  visibility: hidden;
 }
 
 /* Fonts */
@@ -67,7 +67,7 @@ a {
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;
-  font-size: clamp(12px, calc(1rem + .6vw), 18px);
+  font-size: clamp(12px, calc(0.8rem + .6vw), 18px);
   text-decoration-line: none;
 }
 
@@ -112,28 +112,68 @@ a {
   padding-right: var(--padding-horizontal);
 }
 
-/* Containers */
-.slide-container {
-  display: grid;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
-  justify-items: center;
-  text-align: center;
-  position: absolute;
+@keyframes showHideSlide {
+  0% {
+      visibility: visible;
+  }
+
+  99.99999% {
+      visibility: visible;
+  }
+
+  100% {
+      visibility: hidden;
+  }
 }
 
+/* Универсальный стиль для секций с фоновым изображением */
+.background-section {
+  position: relative;
+}
+
+.background-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--background-image, none); /* Переменная для фонового изображения */
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: opacity(0.2); /* Прозрачность изображения */
+  z-index: 0;
+}
+
+.background-section::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--section_sand-color); /* Полупрозрачный цвет слоя */
+  z-index: 1;
+}
+
+.background-section > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Buttons */
 .btn-skip {
   position: absolute;
   justify-content: right;
   width: min-content;
     height: fit-content;
+    padding: 0;
   border: none;
   z-index: 10;
   top: 95%;
   left: 100%;
   transform: translateY(-50%) translateX(-100%);
-  padding: 8px 12px 8px 12px;
   cursor: pointer;
 
   background-color: transparent;
@@ -144,6 +184,13 @@ a {
   -webkit-backdrop-filter: blur(10px);
   border-radius: 0.5em;
 
+}
+
+.btn-skip svg {
+  color: var(--text-light-color);
+  width: fit-content;
+  height: fit-content;
+  padding: 0.8em;
 }
 
 .btn-text {
@@ -199,7 +246,7 @@ a {
 
 .btn-text,
 .btn-skip i {
-  color: white;
+  color: var(--text-light-color);
 }
 
 .btn-skip i {
@@ -212,51 +259,12 @@ a {
 
 .btn-skip:hover i,
 .btn-skip:hover .btn-text {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-light-color-hover);
   
 }
 
-/* Универсальный стиль для секций с фоновым изображением */
-.background-section {
-  position: relative;
-}
-
-.background-section::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--background-image, none); /* Переменная для фонового изображения */
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  filter: opacity(0.2); /* Прозрачность изображения */
-  z-index: 0;
-}
-
-.background-section::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: var(--section_sand-color); /* Полупрозрачный цвет слоя */
-  z-index: 1;
-}
-
-.background-section > * {
-  position: relative;
-  z-index: 2; /* Контент поверх */
-}
-
-
-
 /* Main page */
 .slide-container.main-page {
-  /* max-height: var(--video-banner-max-height); */
   visibility: hidden;
   
   animation-name: showMainPage, reduceHeightMainPage;
@@ -269,14 +277,33 @@ a {
   animation-fill-mode: forwards, forwards;    
 }
 
+@keyframes showMainPage {
+  0% {
+      visibility: visible;
+  }
+
+  100% {
+      visibility: visible;
+  }
+}
+
+@keyframes reduceHeightMainPage {
+  from {
+      opacity: 1;
+      height: 100vh;
+      height: 100dvh;
+  }
+  to {
+      background: rgba(var(--black-brand-color-rgb), 0.95);
+      height: 80vh;
+      height: 80dvh;
+  }
+}
+
 .slide-container.main-page.instant {
   visibility: hidden;
-  animation-name: showMainPage, reduceHeightMainPage;
   animation-duration: 100ms, var(--main-page-delay);
   animation-delay: 0s, 0s !important;
-  animation-iteration-count: 1, 1;
-  animation-timing-function: linear, ease-out;
-  animation-fill-mode: forwards, forwards;    
 }
 
 .slide-container.main-page .text-column-fill {
@@ -304,19 +331,6 @@ a {
   animation-delay: calc(var(--zero-slide-duration) + var(--first-slide-duration) + var(--second-slide-duration) + var(--third-slide-duration) + var(--fourth-slide-duration) + var(--text-row-duration)*5);
 }
 
-@keyframes reduceHeightMainPage {
-  from {
-      opacity: 1;
-      height: 100vh;
-      height: 100dvh;
-  }
-  to {
-      background: rgba(var(--black-brand-color-rgb), 0.95);
-      height: 80vh;
-      height: 80dvh;
-  }
-}
-
 /* Header nav bar */
 #mainNavbar {
   z-index: 1000;
@@ -335,7 +349,6 @@ a {
   }
 }
 
-/* Мобильные кнопки скрыты */
 .mobile-navbar-nav {
   display: none;
   align-items: end;
@@ -386,7 +399,6 @@ a {
   padding: 0;           /* Убираем отступы */
 }
 
-/* Появление меню */
 .navbarToggler.show {
   opacity: 1;
   transform: translateY(0);
@@ -412,14 +424,13 @@ a {
 
 /* video banner */
 .video-banner {
-  /* max-height: var(--video-banner-max-height); */
   height: 100%;
   overflow: hidden;
 }
 
 .video-banner video {
-  height: 100%; /* Убедитесь, что видео масштабируется в пределах контейнера */
-  object-fit: cover; /* Сохраняет обрезку, чтобы видео не выходило за границы */
+  height: 100%;
+  object-fit: cover;
 }
 
 #round-center-button {
@@ -441,6 +452,7 @@ a {
 }
 
 #round-center-button:hover {
+  /* TODO hover effect */
   /* transform: scaleY(1.09) !important; */
   cursor: pointer;
 }
@@ -454,43 +466,12 @@ a {
   }
 }
 
-/* special-offer-section */
+/* special offers section */
 .special-offer-section {
   position: relative;
 }
 
-.special-offer-section::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  /* background: url("../images/uzhin-na-beregu-okeana.avif"); */
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  filter: opacity(0.3); /* Прозрачность изображения */
-  z-index: 0;
-}
-
-.special-offer-section::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: var(--section_sand-color); /* Полупрозрачный цвет */
-  z-index: 1;
-}
-
-.special-offer-section > * {
-  position: relative;
-  z-index: 2;
-}
-
-/* Card */
+/* special offer card */
 .card {
   height: 100%;
   max-height: var(--special-offer-max-height);
@@ -502,7 +483,6 @@ a {
 }
 
 .card:hover {
-  /* transform: scale(1.01); */
   box-shadow: var(--box-shadow-hover);
 }
 
@@ -516,7 +496,7 @@ a {
 
 .card:hover .card-image img {
   transition: transform 1s ease-in;
-  transform: scale(1.05); /* Увеличение изображения */
+  transform: scale(1.05);
 }
 
 .card-image .badge {
@@ -553,8 +533,8 @@ a {
   display: -moz-box;
   -moz-box-orient: vertical;
   white-space: normal;
-  line-height: 1.2em;      /* Контроль высоты строки */
-  max-height: 2.8em;       /* Жёсткая высота блока для двух строк */
+  line-height: 1.2em;
+  max-height: 2.8em;
     
 }
 
@@ -562,7 +542,6 @@ a {
   font-size: 1em;
   line-height: 1.5em;
   text-align: left;
-  text-shadow: 1px 1px 2px rgba(var(--black-brand-color-rgb), 0.3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -620,7 +599,7 @@ a {
 }
 
 
-/* inspiration-gallery */
+/* inspirations gallery */
 .inspiration-container {
   position: relative; /* Родительский контейнер для фиксированных кнопок */
   width: 100%;
@@ -669,6 +648,10 @@ a {
     text-align: left;
 }
 
+.inspiration-image p {
+  color: var(--text-secondary-color);
+}
+
 .inspiration-image .inspiration-title > * {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -702,11 +685,6 @@ a {
 }
   
   
-.carousel-control-next-icon {
-  filter: drop-shadow(2px 2px 2px rgba(var(--black-brand-color-rgb), 1));
-}
-
-
 .carousel-control-next-icon {
   filter: drop-shadow(2px 2px 2px rgba(var(--black-brand-color-rgb), 1));
 }
@@ -799,10 +777,6 @@ a {
 }
 
 /* feedback carousel */
-#carouselFeedback {
-  display: flex;
-  justify-content: center;
-}
 
 /* #carouselFeedback .carousel-inner {
   width: fit-content
@@ -810,10 +784,14 @@ a {
 
 .feedback-item {
   width: 100vw;
+  height: fit-content;
 }
 
 .feedback-item img {
+  position: relative;
   width: fit-content;
+  left: 50%;
+  transform: translateX(-50%);
   overflow: hidden;
   box-shadow: var(--box-shadow);
   border: var(--round-border);
@@ -848,80 +826,18 @@ a {
   white-space: nowrap;
 }
 
-/* Ribbon */
-.ribbon {
-  position: absolute;
-  top: 30px; /* Смещение от верхнего края */
-  left: 0;
-  /* background-color: #dc3545; Красный фон */
-  background-color: rgba(var(--brand-water-light-color));
-  color: #fff; /* Белый текст */
-  padding: 0.3rem 8% 0.3rem 0.3rem; /* Внутренние отступы */
-  font-size: 0.9rem; /* Размер текста */
-  font-weight: bold; /* Жирный шрифт */
-  clip-path: polygon(0 0, 100% 0, 85% 50%, 100% 100%, 0 100%); /* Закругление треугольником */
-  z-index: 1; /* Поверх изображения */
-}
-  
-.ribbon span {
-  display: inline-block;
-  transform: rotate(-5deg); /* Легкий наклон текста */
-}
 
 
 
 
 
-/* ====================================================================================================================== */
-
-
-
-
-
-
-@keyframes showHideSlide {
-  0% {
-      visibility: visible;
-  }
-
-  99.99999% {
-      visibility: visible;
-  }
-
-  100% {
-      visibility: hidden;
-  }
-}
-
-@keyframes showMainPage {
-  0% {
-      visibility: visible;
-  }
-
-  100% {
-      visibility: visible;
-  }
-}
-
-/* Zero slide with logo */
-.slide-container.zero-slide {
-  background-color: var(--black-brand-color);
-  display: block;
-  animation-name: showHideSlide;
-  animation-duration: var(--zero-slide-duration);
-  animation-delay: 0s;
-  animation-iteration-count: 1;
-  animation-timing-function: linear;
-  animation-fill-mode: forwards;
-}
 
 /* First slide */
-.slide-container.first-slide {
+.slide-container.first-slide.animation {
   visibility: hidden;
-
   animation-name: showHideSlide;
   animation-duration: var(--first-slide-duration);
-  animation-delay: var(--zero-slide-duration);
+  /* animation-delay: var(--zero-slide-duration); */
   animation-iteration-count: 1;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
@@ -930,14 +846,10 @@ a {
 .start-photo {
   width: 100%;
   height: 100%;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  object-fit: cover;
 }
 
 /* Second and Third slides */
-
 .slide-container.second-slide {
   background-color: var(--black-brand-color);
   visibility: hidden;

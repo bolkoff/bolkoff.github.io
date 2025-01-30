@@ -1,30 +1,45 @@
-:root {
-    
-    --first-slide-duration: 3s;
+:root {    
+    --first-slide-duration: 300s;
 }
 
-.glitch {
+.start-photo.animation {
     background: #000 no-repeat center;
     background-size: 0;
     height: 100vh;
     height: 100dvh;
     position: relative;
     overflow: hidden;
-  }
-  .glitch::before, .glitch::after,
-  .glitch .channel {
-    background: inherit;
-    background-size: cover;
-    bottom: 0;
-    left: 0;
     position: absolute;
-    right: 0;
     top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
   }
-  .glitch::before {
+
+.start-photo.animation img {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+
+  .start-photo.animation .before {
+    animation: glitch-before var(--first-slide-duration) linear infinite alternate both;
+  }
+
+  .start-photo.animation .after {
+    animation: glitch-after var(--first-slide-duration) linear infinite alternate both;
+  }
+
+  .start-photo.animation .channel {
+    position: absolute;
+    mix-blend-mode: multiply;
+  }
+
+  .start-photo.animation::before {
     animation: glitch-before var(--first-slide-duration) linear infinite alternate both;
     content: "";
   }
+
   @keyframes glitch-before {
     0% {
       -webkit-clip-path: polygon(0% 56.8643443623%, 100% 56.8643443623%, 100% 65.4926954907%, 0% 65.4926954907%);
@@ -482,7 +497,7 @@
       transform: none;
     }
   }
-  .glitch::after {
+  .start-photo.animation::after {
     animation: glitch-after var(--first-slide-duration) linear infinite alternate both;
     content: "";
   }
@@ -943,10 +958,10 @@
       transform: none;
     }
   }
-  .glitch .channel {
+  .start-photo.animation .channel {
     mix-blend-mode: screen;
   }
-  .glitch .channel::before {
+  .start-photo.animation .channel::before {
     bottom: 0;
     content: "";
     display: block;
@@ -956,7 +971,7 @@
     right: 0;
     top: 0;
   }
-  .glitch .r {
+  .start-photo.animation .r {
     animation: rgb-shift-r var(--first-slide-duration) steps(1, jump-end) infinite alternate both;
   }
   @keyframes rgb-shift-r {
@@ -1234,10 +1249,10 @@
       transform: none;
     }
   }
-  .glitch .r::before {
+  .start-photo.animation .r::before {
     background: #f00;
   }
-  .glitch .g {
+  .start-photo.animation .g {
     animation: rgb-shift-g var(--first-slide-duration) steps(1, jump-end) infinite alternate both;
   }
   @keyframes rgb-shift-g {
@@ -1515,10 +1530,10 @@
       transform: none;
     }
   }
-  .glitch .g::before {
+  .start-photo.animation .g::before {
     background: #0f0;
   }
-  .glitch .b {
+  .start-photo.animation .b {
     animation: rgb-shift-b var(--first-slide-duration) steps(1, jump-end) infinite alternate both;
   }
   @keyframes rgb-shift-b {
@@ -1796,6 +1811,6 @@
       transform: none;
     }
   }
-  .glitch .b::before {
+  .start-photo.animation .b::before {
     background: #00f;
   }
