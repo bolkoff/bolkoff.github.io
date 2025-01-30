@@ -594,7 +594,6 @@ function calcTextRows() {
 
 async function showMain() {
     await loadScript("https://cdn.jsdelivr.net/npm/vanilla-lazyload@19.1.3/dist/lazyload.min.js", "LazyLoad");
-    await loadCSS("https://fonts.googleapis.com/css2?family=Arimo:wght@500&family=Oswald&family=Roboto+Condensed:wght@100..900&display=swap");
     await loadCSS("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css");
     await loadScript("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js");
     await loadCSS("css/style.css");

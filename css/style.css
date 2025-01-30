@@ -56,14 +56,14 @@ img:not([src]):not([srcset]) {
 
 /* Fonts */
 .brand-font {
-  font-family: "Oswald", serif;
+  font-family: "Oswald-Regular", serif;
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;
 }
 
 .regular-font {
-  font-family: "Roboto Condensed", sans-serif !important;
+  font-family: "RobotoCondensed-Regular", sans-serif !important;
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;
@@ -71,8 +71,33 @@ img:not([src]):not([srcset]) {
   text-decoration-line: none;
 }
 
+@font-face {
+  font-family: 'Arimo-Regular';
+  src: url('../fonts/Arimo-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'RobotoCondensed-Regular';
+  src: url('../fonts/RobotoCondensed-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Oswald-Regular';
+  src: url('../fonts/Oswald-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+
 .header-font {
-  font-family: "Arimo", sans-serif;
+  font-family: "Arimo-Regular", sans-serif;
   font-optical-sizing: auto;
   font-weight: 500;
   font-style: normal;
@@ -81,7 +106,7 @@ img:not([src]):not([srcset]) {
 }
 
 .card-header-font {
-  font-family: "Arimo", sans-serif;
+  font-family: "Arimo-Regular", sans-serif;
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;
