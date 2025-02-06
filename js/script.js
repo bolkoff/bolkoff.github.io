@@ -1,3 +1,84 @@
+class SpriteCover {
+    constructor(spriteElement, container, frameWidth, frameHeight, frameCount) {
+        this.sprite = spriteElement;
+        this.container = container;
+        this.frameWidth = frameWidth;
+        this.frameHeight = frameHeight;
+        this.currentFrame = 0;
+        this.totalFrames = frameCount;
+        this.scale = 1;
+        this.xCenter = 0;
+        this.yCenter = 0;
+
+        this.resizeObserver = new ResizeObserver(() => this.updateSize());
+        this.resizeObserver.observe(container);
+        
+        this.initSprite();
+        this.updateSize();
+    }
+
+    initSprite() {
+        // Установка исходных размеров спрайта
+        this.sprite.parentElement.parentElement.style.width = `${this.frameWidth * this.totalFrames}px`;
+        this.sprite.parentElement.parentElement.style.height = `${this.frameHeight}px`;
+        
+        
+        // Начальная позиция первого кадра
+        //this.updateTransform();
+    }
+
+    updateSize() {
+        const containerWidth = Math.abs(this.container.clientWidth);
+        const containerHeight = Math.abs(this.container.clientHeight);
+
+        if (containerWidth > containerHeight) {
+            this.scale = containerWidth / this.frameWidth;
+            console.log("containerWidth =", containerWidth, "this.frameWidth= ", this.frameWidth);
+            this.yCenter = - this.frameHeight * (((containerWidth - containerHeight)/2)/containerHeight);
+            this.xCenter = 0;
+        }
+        else {
+            this.scale = containerHeight / this.frameHeight;
+            console.log("containerHeight =", containerHeight, "this.frameHeight= ", this.frameHeight);
+            this.xCenter = - this.frameWidth * (((containerHeight - containerWidth)/2)/containerWidth);
+            this.yCenter = 0;
+        }
+
+        this.sprite.parentElement.parentElement.style.transform = `scale(${this.scale})`;
+        
+        this.updateTransform();
+    }
+
+    updateTransform() {
+        const xOffset = -this.currentFrame * this.frameWidth + this.xCenter;
+        this.sprite.style.transform = `translateX(${xOffset}px) translateY(${this.yCenter}px)`;
+    }
+
+    setFrame(index) {
+        this.currentFrame = index;
+        this.updateTransform();
+    }
+}
+
+// Список текстов с таймингами {время в секундах: текст}
+const textTimeline = [
+    { time: 0, text: "первого погружения с аквалангом в Красном море" },
+    { time: 1.2, text: "романтического ужина на пляже Мальдив" },
+    { time: 2.39, text: "полета на воздушном шаре над Каппадокией" },
+    { time: 3.55, text: "купания со слонами в Таиланде" },
+    { time: 4.69, text: "завтрака в бассейне на вилле в Дубае" },
+    { time: 5.78, text: "первого урока серфинга на Бали" },
+    { time: 6.82, text: "прогулки на яхте по побережью Дубая" },
+    { time: 7.79, text: "первого заплыва с черепахами на Мальдивах" },
+    { time: 8.69, text: "посещения термальных источников Памуккале" },
+    { time: 9.5, text: "дегустации местной кухни в Стамбуле" },
+    { time: 10.22, text: "рыбалки на закате в Индийском океане" },
+    { time: 10.83, text: "первого урока дайвинга в бассейне" },
+    { time: 11.33, text: "спа-ритуала с видом на океан" },
+    { time: 11.83, text: "хаммама в лучших традициях Турции" },
+    { time: 12.33, text: "тайского массажа на пляже" },
+    ];
+
 async function loadInto() {
     try {
         const controller = new AbortController(); // Контроллер для отмены
@@ -25,7 +106,7 @@ async function loadInto() {
         }
         else if (introFlags.includes("skip")) {
             removeIntro();
-            showMain();
+            showMainPage();
             return;
         }
 
@@ -54,7 +135,7 @@ async function loadInto() {
         console.log("🔹 Step 5: load main css");
         await loadStep([
             loadCSS("css/style.css"),
-            loadScript("https://cdnjs.cloudflare.com/ajax/libs/fitty/2.3.2/fitty.min.js", "fitty"),
+            loadScript("https://cdnjs.cloudflare.com/ajax/libs/fitty/2.3.2/fitty.min.js", "fitty")
         ],
         signal);
 
@@ -62,24 +143,25 @@ async function loadInto() {
         updateProgress(0, allProgressSteps);
 
         console.log("🔹 Step 6: load intro slides resources");
-        await loadStep([
+        const step6Results = await loadStep([
             loadResources(".slide-container.zero-slide ~ [class*='-slide'] .lazy", updateProgress),
-            
+            loadScript("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"),
+            initSprite()
+
         ],
         signal);
+
+        console.log("step6Results =", step6Results);
 
         console.log("🔹 Step 7: waiting resources progress");
         await loadStep([
             waitForProgressCompete(),
-            
         ],
         signal);
 
-        loadCSS("https://fonts.googleapis.com/css2?family=Arimo:wght@500&family=Oswald&family=Roboto+Condensed:wght@100..900&display=swap");
         loadCSS("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css");
-        loadCSS("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css");
         //loadCSS("/css/glitch.css");
-        loadScript("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js");
+        loadCSS("css/element-icons.css");
 
         console.log("🔹 Step 8: blue part animation");
         await loadStep([
@@ -90,17 +172,18 @@ async function loadInto() {
         console.log("🔹 Step 9: hide zero slide and begin slideshow");
         await loadStep([
             removeSlide(document.querySelector(".slide-container.zero-slide")),
-            startSlidesCycle(".slide-container.zero-slide ~ [class*='-slide']")
+            startSlidesCycle(".slide-container.zero-slide ~ [class*='-slide']", step6Results[2])
         ],
         signal);
 
-        //showMain();
+        loadMainPageResources();
+        enableMainPage();
         console.log(introFlags);
     }
     catch (error) {
         if (error.name === "AbortError") {
             console.log("⏩ Loading skipped by user");
-            showMain();
+            showMainPage();
         } else {
             console.error("❌ Error loading page:", error);
         }
@@ -181,6 +264,7 @@ function loadScript(src, globalVar = null, checkInterval = 10, timeout = 5000) {
 }
 
 async function loadResources(selector, updateProgress) {
+    console.log("starting loading resources for: ", selector);
     return new Promise((resolve, reject) => {
         let elementsCount = 0;
         const lazyLoad = new LazyLoad({
@@ -189,7 +273,7 @@ async function loadResources(selector, updateProgress) {
                 if (!elementsCount) {
                     elementsCount = lazyLoad.toLoadCount + 1;
                 }
-                
+                console.log("callback_loaded for: ", elem.classList);
                 if (updateProgress) {
                     updateProgress ((elementsCount - lazyLoad.toLoadCount), elementsCount);
                 }
@@ -201,6 +285,7 @@ async function loadResources(selector, updateProgress) {
                 if (updateProgress) {
                     updateProgress(elementsCount, elementsCount);
                 }
+                console.log("callback_finish for: ", selector);
                 resolve();
             }
         });
@@ -251,8 +336,6 @@ async function prepareSkipButtons(slidesSelector, controller) {
                         console.log("⏩ User clicked skip");
                         controller.abort();
                         skipIntro();
-                        
-                        //showMain();
                     });
                 }
                 else {
@@ -418,37 +501,111 @@ function skipIntro() {
     slides.forEach((slide) => {removeSlide(slide);});
 }
 
+function fixSlideshowVideoSources(selector) {
+    return new Promise((resolve, reject) => {
+        const slideshowVideo = document.querySelector(selector);
+
+        if (!slideshowVideo) {
+            reject();
+            return;
+        }
+
+        const sources = Array.from(slideshowVideo.querySelectorAll("source"));
+
+        // Проверяем поддержку MP4 (H.264)
+        const supportsMP4 = document.createElement("video").canPlayType("video/mp4") !== "";
+        let bestSourceMP4 = null;
+        let bestSourceWebM = null;
+
+        sources.forEach(source => {
+            const type = source.getAttribute("type");
+            const media = source.getAttribute("media") || "";
+
+            let matchesMedia = !media || window.matchMedia(media).matches;
+
+            if (matchesMedia) {
+                if (type === "video/mp4") {
+                    bestSourceMP4 = source;
+                } else if (type === "video/webm") {
+                    bestSourceWebM = source;
+                }
+            }
+        });
+
+        // Выбираем MP4, если поддерживается, иначе WebM
+        const bestSource = supportsMP4 ? bestSourceMP4 || bestSourceWebM : bestSourceWebM;
+
+        if (bestSource) {
+            console.log(`Выбрано видео: ${bestSource.getAttribute("data-src")}`);
+            slideshowVideo.setAttribute("data-src", bestSource.getAttribute("data-src"));
+            slideshowVideo.querySelectorAll("source").forEach(source => source.remove());
+            //slideshowVideo.load();
+            resolve();
+        }
+        reject();
+    });
+}
+
+function initSprite () {
+    return new Promise((resolve, reject) => {
+        const sprite = document.getElementById('sprite');
+        const viewport = document.querySelector('.viewport');
+        const img = document.querySelector('.viewport img');
+
+        if (sprite.complete) {
+            resolve(createSpriteControler(sprite, viewport));
+        } else {
+            img.addEventListener("load", () => {resolve(createSpriteControler(sprite, viewport));}, { once: true });
+        }
+    });
+    
+    function createSpriteControler(sprite, viewport) {
+        const controller = new SpriteCover(
+            sprite,
+            viewport,
+            sprite.naturalHeight, // Ширина одного кадра
+            sprite.naturalHeight,  // Высота одного кадра
+            textTimeline.length
+        );
+        return controller;
+    }
+}
+
 // Запуск цикла показа слайдов
-function startSlidesCycle(slidesSelector) {
+function startSlidesCycle(slidesSelector, spriteControler) {
     function runSlideshow() {
         let currentIndex = 0;
         const fourthslideText = document.querySelector('.fourth-slide .text-block h2 span');
         const fourthSlideTextColumn = document.querySelector('.slide-container.fourth-slide .text-column-fill')
-        
-        // Список текстов с таймингами {время в секундах: текст}
-        const textTimeline = [
-            { time: 0.0, text: "первого погружения с аквалангом в Красном море" },
-            { time: 1.1, text: "романтического ужина на пляже Мальдив" },
-            ];
-        
-        function updateSlideshowText () {
-            if (currentIndex < textTimeline.length && slideshowVideo.currentTime >= textTimeline[currentIndex].time) {
-                // Меняем текст
-                fourthslideText.textContent = textTimeline[currentIndex].text;
-                currentIndex++;  // Переход к следующему тексту
+        let current = 0;
+
+        function nextFrame(spriteControler) {
+            if (spriteControler) {
+                if (current >= textTimeline.length) {console.log("nextFrame exit"); return;} // Выход из рекурсии, если достигнут конец
+
+                console.log("current =", current);
+                spriteControler.setFrame(current);
+
+                current++;
+                
+                
+                if (current < textTimeline.length) {
+                    let delay = (textTimeline[current].time - textTimeline[current - 1].time) * 1000;
+                    setTimeout(() => {
+                        nextFrame(spriteControler);
+                        //console.log("current =", current, "textTimeline[current].time =", textTimeline[current].time);
+                    },
+                    delay); // Запускаем следующий кадр
+                     
+                }
             }
         }
-        const slideshowVideo = document.getElementById("slideshow");
-        slideshowVideo.addEventListener("timeupdate", updateSlideshowText);
 
-        // Сброс при повторном проигрывании видео
-        slideshowVideo.addEventListener("ended", () => {
-            currentIndex = 0;
+        fourthSlideTextColumn.addEventListener('animationend', (event) => {
+            if (event.animationName === 'zoomInText') {
+                nextFrame(spriteControler);
+            }
         });
-
-        fourthSlideTextColumn.addEventListener('animationstart', () => {
-            slideshowVideo.play();
-        }, { once: true });
     }
 
     function runIntroSlidesAnimation(){
@@ -466,10 +623,10 @@ function startSlidesCycle(slidesSelector) {
         runSlideshow();
 
         window.addEventListener('resize', () => {calcTextRows();});
+        calcTextRows();
 
         if (slidesCount) {
             slides.forEach((slide) => {
-                calcTextRows();
                 console.log(`subscribing slide for animationend ${slide.classList}`)
                 slide.addEventListener('animationend', (event) => {
                     if (event.animationName === 'showHideSlide') {
@@ -487,15 +644,16 @@ function startSlidesCycle(slidesSelector) {
         else {
             reject("no intro slides flound");
         }
-        
     });
 }
 
 function fitTextToContainer(containerSelector) {
     const container = document.querySelector(containerSelector);
+    
     if (!container) {
         return;
     }
+    
     const rows = Array.from(container.querySelectorAll(".text-row"));
     const containerWidth = container.offsetWidth;
     const containerHeight = container.offsetHeight;
@@ -583,8 +741,8 @@ function calcTextRows() {
             (async () => {
                 setTimeout(() => fitTextToContainer('.text-column.second-slide'), 100);
                 setTimeout(() => fitTextToContainer('.text-column.third-slide'), 200);
-                setTimeout(() => fitTextToContainer('.text-column.fourth-slide'), 200);
-                setTimeout(() => fitTextToContainer('.text-column.main-page'), 300);
+                setTimeout(() => fitTextToContainer('.text-column.fourth-slide'), 300);
+                setTimeout(() => fitTextToContainer('.text-column.main-page'), 400);
             })();
       });
     },
@@ -592,25 +750,32 @@ function calcTextRows() {
     return resizeTimeout;
 }
 
-async function showMain() {
+async function loadMainPageResources() {
     await loadScript("https://cdn.jsdelivr.net/npm/vanilla-lazyload@19.1.3/dist/lazyload.min.js", "LazyLoad");
     await loadCSS("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css");
     await loadScript("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js");
     await loadCSS("css/style.css");
-    await loadResources("#vid");
+    await loadResources(".video-banner-poster-lazy")
+        .then (() => loadResources(".video-banner-video"));
+    
     const lazyLoad = new LazyLoad({
             elements_selector: ".lazy-main",
             use_native: "true"
             });
 
-    
-    
-    loadCSS("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css");
+    loadCSS("css/element-icons.css");
     //loadCSS("/css/glitch.css");
-    
-    
-    
+}
 
+async function enableMainPage() {
+    document.body.style.display = 'block';
+    document.body.style.overflow = 'auto';
+}
+
+async function showMainPage() {
+    loadMainPageResources();
+    enableMainPage();
+    
     const mainPage = document.querySelector(".main-page");
     const navbar = document.getElementById("mainNavbar");
     const roundButton = document.getElementById('round-center-button');
@@ -644,8 +809,7 @@ async function showMain() {
             row.style.transition = 'none !important';
         }); 
 
-    document.body.style.display = 'block';
-    document.body.style.overflow = 'auto';
+    
     
 }
 
@@ -669,17 +833,20 @@ window.addEventListener('load', () => {
     
     window.addEventListener('scroll', updateScrolledGradient);
     window.addEventListener('scroll', closeMenu);
-    navbarCollapse.addEventListener('show.bs.collapse', hideRoundButton);
-    navbarCollapse.addEventListener('hide.bs.collapse', showRoundButton);
-    
-    function updateScrolledGradient() {
-        const videoBannerHeight = videoBanner ? videoBanner.offsetHeight : 50;
-        if (navbar) {
-            if (window.scrollY > videoBannerHeight) {
-                navbar.classList.add("scrolled");
-            } else {
-                navbar.classList.remove("scrolled");
-                navbarCollapse.classList.remove("show");
+
+    if (navbarCollapse) {
+        navbarCollapse.addEventListener('show.bs.collapse', hideRoundButton);
+        navbarCollapse.addEventListener('hide.bs.collapse', showRoundButton);
+        
+        function updateScrolledGradient() {
+            const videoBannerHeight = videoBanner ? videoBanner.offsetHeight : 50;
+            if (navbar) {
+                if (window.scrollY > videoBannerHeight) {
+                    navbar.classList.add("scrolled");
+                } else {
+                    navbar.classList.remove("scrolled");
+                    navbarCollapse.classList.remove("show");
+                }
             }
         }
     }
@@ -700,62 +867,68 @@ window.addEventListener('load', () => {
         }
         toggler.setAttribute('aria-expanded', 'false');
     }
-    video.addEventListener('canplaythrough', () => {
-        video.play();
-        console.log("Started video play");
-    }, { once: true });
-
+    if (video) {
+        video.addEventListener('canplaythrough', () => {
+            const poster = document.querySelector(".video-banner-poster");
+            const videoBannerVideo = document.querySelector(".video-banner-video");
+            
+            videoBannerVideo.style.display = "block";
+            poster.style.display = "none";
+            video.play();
+            console.log("Started video play");
+        }, { once: true });
+    }
 });
 
 
 const scrollLeft = document.getElementById('scrollLeft');
 const scrollRight = document.getElementById('scrollRight');
 const wrapper = document.getElementById('inspirationGallery');
-
-
-function updateButtonVisibility() {
-    // Скрываем кнопки, если достигли начала или конца
-    scrollLeft.disabled = wrapper.scrollLeft === 0;
-    scrollRight.disabled = wrapper.scrollLeft + wrapper.offsetWidth >= wrapper.scrollWidth;
-}
-
-// Прокрутка влево
-scrollLeft.addEventListener('click', () => {
-    const elementWidth = getVisibleElementWidth(wrapper, 'left');
-    wrapper.scrollBy({ left: -elementWidth, behavior: 'smooth' });
-    setTimeout(updateButtonVisibility, 300); // Учитываем анимацию
-});
-
-// Прокрутка вправо
-scrollRight.addEventListener('click', () => {
-    const elementWidth = getVisibleElementWidth(wrapper, 'right');
-    wrapper.scrollBy({ left: elementWidth, behavior: 'smooth' });
-    setTimeout(updateButtonVisibility, 300); // Учитываем анимацию
-});
-
-// Обновляем кнопки при загрузке и изменении размера окна
-window.addEventListener('resize', updateButtonVisibility);
-wrapper.addEventListener('scroll', updateButtonVisibility);
-updateButtonVisibility(); // Первый вызов при загрузке
-
-// Функция для определения ширины частично видимого элемента
-function getVisibleElementWidth(wrapper, direction) {
-    const children = wrapper.children;
-    const wrapperRect = wrapper.getBoundingClientRect();
-
-    for (let i = 0; i < children.length; i++) {
-        const child = children[i];
-        const childRect = child.getBoundingClientRect();
-
-        if (direction === 'left' && childRect.right > wrapperRect.left) {
-        return Math.min(childRect.right - wrapperRect.left, child.offsetWidth);
-        }
-
-        if (direction === 'right' && childRect.left < wrapperRect.right) {
-        return Math.min(wrapperRect.right - childRect.left, child.offsetWidth);
-        }
+if (scrollLeft && scrollRight) {
+    function updateButtonVisibility() {
+        // Скрываем кнопки, если достигли начала или конца
+        scrollLeft.disabled = wrapper.scrollLeft === 0;
+        scrollRight.disabled = wrapper.scrollLeft + wrapper.offsetWidth >= wrapper.scrollWidth;
     }
 
-    // Если ничего не найдено, используем фиксированное значение (например, 300px)
-    return 300;
+    // Прокрутка влево
+    scrollLeft.addEventListener('click', () => {
+        const elementWidth = getVisibleElementWidth(wrapper, 'left');
+        wrapper.scrollBy({ left: -elementWidth, behavior: 'smooth' });
+        setTimeout(updateButtonVisibility, 300); // Учитываем анимацию
+    });
+
+    // Прокрутка вправо
+    scrollRight.addEventListener('click', () => {
+        const elementWidth = getVisibleElementWidth(wrapper, 'right');
+        wrapper.scrollBy({ left: elementWidth, behavior: 'smooth' });
+        setTimeout(updateButtonVisibility, 300); // Учитываем анимацию
+    });
+
+    // Обновляем кнопки при загрузке и изменении размера окна
+    window.addEventListener('resize', updateButtonVisibility);
+    wrapper.addEventListener('scroll', updateButtonVisibility);
+    updateButtonVisibility(); // Первый вызов при загрузке
+
+    // Функция для определения ширины частично видимого элемента
+    function getVisibleElementWidth(wrapper, direction) {
+        const children = wrapper.children;
+        const wrapperRect = wrapper.getBoundingClientRect();
+
+        for (let i = 0; i < children.length; i++) {
+            const child = children[i];
+            const childRect = child.getBoundingClientRect();
+
+            if (direction === 'left' && childRect.right > wrapperRect.left) {
+            return Math.min(childRect.right - wrapperRect.left, child.offsetWidth);
+            }
+
+            if (direction === 'right' && childRect.left < wrapperRect.right) {
+            return Math.min(wrapperRect.right - childRect.left, child.offsetWidth);
+            }
+        }
+
+        // Если ничего не найдено, используем фиксированное значение (например, 300px)
+        return 300;
+    }
 }
