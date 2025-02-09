@@ -35,3 +35,12 @@ body {
   .zero-slide ~ [class*="-slide"] {
     visibility: hidden;
   }
+
+  .pending-animation {
+    display: none;
+  }
+  
+  .pending-animation.animation {
+    display: block;
+  }
+  

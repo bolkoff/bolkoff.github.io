@@ -3,11 +3,11 @@
   --main-page-delay: 1s;
   --main-page-intro: calc(var(--text-row-duration)*7);
   --fourth-slide-zoom-in-duration: 2s;
-  --fourth-slide-zoom-in-scale: 55;
+  --fourth-slide-zoom-in-scale: 25;
   --slide: var(--fourth-slide-zoom-in-duration);
   --fourth-slide-duration: calc(var(--fourth-slide-zoom-in-duration) + var(--inspiration-images-count) * 800ms);
   --text-row-duration: 300ms;
-  --inspiration-images-count: 15;
+  --inspiration-images-count: 2;
   /* intro slides durations */
   --zero-slide-duration: 3.2s;
   --first-slide-duration: 1s;
@@ -1020,6 +1020,8 @@ img:not([src]):not([srcset]) {
   background-color: var(--black-brand-color);
   mix-blend-mode: darken;
 
+  will-change: transform;
+  
   animation: zoomInText var(--fourth-slide-zoom-in-duration) cubic-bezier(0.8, 0, 1, 1) 
              calc(var(--first-slide-duration) + var(--second-slide-duration) + var(--third-slide-duration)) forwards,
              hideElement 100ms linear 

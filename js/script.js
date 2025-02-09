@@ -17,6 +17,10 @@ class SpriteCover {
         this.updateSize();
     }
 
+    destroy() {
+        this.resizeObserver.disconnect();
+    }
+
     initSprite() {
         // Установка исходных размеров спрайта
         this.sprite.parentElement.parentElement.style.width = `${this.frameWidth * this.totalFrames}px`;
@@ -34,13 +38,18 @@ class SpriteCover {
         if (containerWidth > containerHeight) {
             this.scale = containerWidth / this.frameWidth;
             console.log("containerWidth =", containerWidth, "this.frameWidth= ", this.frameWidth);
-            this.yCenter = - this.frameHeight * (((containerWidth - containerHeight)/2)/containerHeight);
+            this.yCenter = - this.frameHeight * (((containerWidth - containerHeight)/2)/containerWidth);
             this.xCenter = 0;
+        }
+        else if (containerHeight > containerWidth){
+            this.scale = containerHeight / this.frameHeight;
+            console.log("containerHeight =", containerHeight, "this.frameHeight= ", this.frameHeight);
+            this.xCenter = - this.frameWidth * (((containerHeight - containerWidth)/2)/containerHeight);
+            this.yCenter = 0;
         }
         else {
             this.scale = containerHeight / this.frameHeight;
-            console.log("containerHeight =", containerHeight, "this.frameHeight= ", this.frameHeight);
-            this.xCenter = - this.frameWidth * (((containerHeight - containerWidth)/2)/containerWidth);
+            this.xCenter = 0;
             this.yCenter = 0;
         }
 
@@ -63,27 +72,27 @@ class SpriteCover {
 // Список текстов с таймингами {время в секундах: текст}
 const textTimeline = [
     { time: 0, text: "первого погружения с аквалангом в Красном море" },
-    { time: 1.2, text: "романтического ужина на пляже Мальдив" },
-    { time: 2.39, text: "полета на воздушном шаре над Каппадокией" },
-    { time: 3.55, text: "купания со слонами в Таиланде" },
-    { time: 4.69, text: "завтрака в бассейне на вилле в Дубае" },
-    { time: 5.78, text: "первого урока серфинга на Бали" },
-    { time: 6.82, text: "прогулки на яхте по побережью Дубая" },
-    { time: 7.79, text: "первого заплыва с черепахами на Мальдивах" },
-    { time: 8.69, text: "посещения термальных источников Памуккале" },
-    { time: 9.5, text: "дегустации местной кухни в Стамбуле" },
-    { time: 10.22, text: "рыбалки на закате в Индийском океане" },
-    { time: 10.83, text: "первого урока дайвинга в бассейне" },
-    { time: 11.33, text: "спа-ритуала с видом на океан" },
-    { time: 11.83, text: "хаммама в лучших традициях Турции" },
-    { time: 12.33, text: "тайского массажа на пляже" },
+    { time: 0.99, text: "романтического ужина на пляже Мальдив" },
+    { time: 1.88, text: "полета на воздушном шаре над Каппадокией" },
+    { time: 2.66, text: "купания со слонами в Таиланде" },
+    { time: 3.38, text: "завтрака в бассейне на вилле в Дубае" },
+    { time: 4.04, text: "первого урока серфинга на Бали" },
+    { time: 4.67, text: "прогулки на яхте по побережью Дубая" },
+    { time: 5.29, text: "первого заплыва с черепахами на Мальдивах" },
+    { time: 5.91, text: "посещения термальных источников Памуккале" },
+    { time: 6.55, text: "дегустации местной кухни в Стамбуле" },
+    { time: 7.24, text: "рыбалки на закате в Индийском океане" },
+    { time: 7.98, text: "первого урока дайвинга в бассейне" },
+    { time: 8.82, text: "спа-ритуала с видом на океан" },
+    { time: 9.75, text: "хаммама в лучших традициях Турции" },
+    { time: 10.8, text: "тайского массажа на пляже" },
     ];
 
 async function loadInto() {
-    try {
-        const controller = new AbortController(); // Контроллер для отмены
-        const { signal } = controller;
+    const controller = new AbortController(); // Контроллер для отмены
+    const { signal } = controller;
 
+    intro: try {
         let loadedProgressSteps = 0;
         const allProgressSteps = 2;
 
@@ -94,10 +103,12 @@ async function loadInto() {
         console.log("🔹 Step 0: get intro show flag");
         introFlags = await loadStep([
             checkIntroFlags(),
+            loadCSS("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"),
+            loadScript("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js")
         ],
         signal);
 
-        console.log("🔹 Step 1: prepare buttons for returned");
+        console.log("🔹 Step 1: processing returned or skipped");
         if (introFlags.includes("returned")) {
             await loadStep([
                 prepareSkipButtons(".slide-container.zero-slide ~ [class*='-slide']", controller),
@@ -105,9 +116,9 @@ async function loadInto() {
             signal);
         }
         else if (introFlags.includes("skip")) {
+            console.log("skipping intro");
             removeIntro();
-            showMainPage();
-            return;
+            break intro;
         }
 
         console.log("🔹 Step 2: load zero slide css");
@@ -145,13 +156,12 @@ async function loadInto() {
         console.log("🔹 Step 6: load intro slides resources");
         const step6Results = await loadStep([
             loadResources(".slide-container.zero-slide ~ [class*='-slide'] .lazy", updateProgress),
+            loadCSS("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"),
             loadScript("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"),
             initSprite()
-
+            //loadCSS("/css/glitch.css");
         ],
         signal);
-
-        console.log("step6Results =", step6Results);
 
         console.log("🔹 Step 7: waiting resources progress");
         await loadStep([
@@ -159,7 +169,7 @@ async function loadInto() {
         ],
         signal);
 
-        loadCSS("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css");
+        
         //loadCSS("/css/glitch.css");
         loadCSS("css/element-icons.css");
 
@@ -172,18 +182,47 @@ async function loadInto() {
         console.log("🔹 Step 9: hide zero slide and begin slideshow");
         await loadStep([
             removeSlide(document.querySelector(".slide-container.zero-slide")),
-            startSlidesCycle(".slide-container.zero-slide ~ [class*='-slide']", step6Results[2])
+            startSlidesCycle(".slide-container.zero-slide ~ [class*='-slide']", step6Results[3])
         ],
         signal);
-
-        loadMainPageResources();
-        enableMainPage();
-        console.log(introFlags);
     }
     catch (error) {
         if (error.name === "AbortError") {
             console.log("⏩ Loading skipped by user");
-            showMainPage();
+        } else {
+            console.error("❌ Error loading page:", error);
+        }
+    }
+
+    try {
+        console.log("🔹 Step 10: loading main page scripts");
+        await loadStep([
+            loadScript("https://cdn.jsdelivr.net/npm/vanilla-lazyload@19.1.3/dist/lazyload.min.js", "LazyLoad"),
+            loadCSS("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"),
+            loadScript("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js")
+        ],
+        signal);
+
+        console.log("🔹 Step 11: loading main page resources");
+        await loadStep([
+            loadCSS("css/style.css"),
+            loadResources(".video-banner-poster-lazy")
+        ],
+        signal);
+
+        console.log("🔹 Step 12: showing page and lazyload remaining resources");
+        await loadStep([
+            initLazyLoad(),
+            enableMainPage(),
+            showMainPage(),
+            loadCSS("css/element-icons.css")
+        ],
+        signal);
+    }
+    catch (error) {
+        if (error.name === "AbortError") {
+            console.log("⏩ Loading skipped by user");
+            await showMainPage();
         } else {
             console.error("❌ Error loading page:", error);
         }
@@ -203,8 +242,9 @@ async function loadStep(promises, signal) {
 
         signal?.addEventListener("abort", onAbort, { once: true });
         
-    
-        const results = Promise.all(promises)
+        const validPromises = promises.filter(p => p instanceof Promise);
+        
+        const results = Promise.all(validPromises)
             .then(resolve)
             .catch(reject)
             .finally(() => {
@@ -218,50 +258,71 @@ async function loadStep(promises, signal) {
 async function loadCSS(href) {
     return new Promise((resolve, reject) => {
         if (document.querySelector(`link[href="${href}"]`)) {
+            console.log("Loaded css: " + href);
             return resolve(); // CSS уже загружен
         }
         const link = document.createElement("link");
         link.rel = "stylesheet";
         link.href = href;
-        link.onload = resolve;
+        link.onload = () => {console.log("Loaded css: " + href);resolve();};
         link.onerror = reject;
         document.head.appendChild(link);
     });
 }
 
 function loadScript(src, globalVar = null, checkInterval = 10, timeout = 5000) {
-    return new Promise((resolve, reject) => {
-        // Если скрипт уже загружен и глобальная переменная доступна — сразу резолвим
-        if (document.querySelector(`script[src="${src}"]`)) {
-            if (!globalVar || window[globalVar]) return resolve(window[globalVar]);
-        }
-
-        const script = document.createElement("script");
-        script.src = src;
-        script.onload = () => {
-            
-            if (!globalVar) {
-                resolve();
-                return;
+    function loadScriptInternal(src, globalVar = null, checkInterval = 10, timeout = 5000) {
+        return new Promise((resolve, reject) => {
+            // Если скрипт уже загружен и глобальная переменная доступна — сразу резолвим
+            if (document.querySelector(`script[src="${src}"]`)) {
+                if (!globalVar || window[globalVar]) return resolve(window[globalVar]);
             }
 
-            // Ждем появления глобального объекта
-            const startTime = Date.now();
-            const checkVar = setInterval(() => {
-                if (window[globalVar]) {
-                    clearInterval(checkVar);
-                    resolve(window[globalVar]);
-                } else if (Date.now() - startTime > timeout) {
-                    clearInterval(checkVar);
-                    reject(new Error(`Timeout: ${globalVar} не появился после ${timeout} мс`));
+            const script = document.createElement("script");
+            script.src = src;
+            script.onload = () => {
+                
+                if (!globalVar) {
+                    console.log("Loaded script: " + src);
+                    resolve();
+                    return;
                 }
-            }, checkInterval);
-        };
 
-        script.onerror = () => reject(new Error(`Ошибка загрузки: ${src}`));
-        document.head.appendChild(script);
+                // Ждем появления глобального объекта
+                const startTime = Date.now();
+                const checkVar = setInterval(() => {
+                    if (window[globalVar]) {
+                        clearInterval(checkVar);
+                        console.log("Loaded script: " + src);
+                        resolve(window[globalVar]);
+                    } else if (Date.now() - startTime > timeout) {
+                        clearInterval(checkVar);
+                        reject(new Error(`Timeout: ${globalVar} не появился после ${timeout} мс`));
+                    }
+                }, checkInterval);
+            };
+
+            script.onerror = () => reject(new Error(`Ошибка загрузки: ${src}`));
+            document.head.appendChild(script);
+        });
+    }
+
+    return new Promise((resolve, reject) => {
+        function attempt(remainingAttempts) {
+            loadScriptInternal(src)
+                .then(resolve)
+                .catch((err) => {
+                    if (remainingAttempts > 0) {
+                        setTimeout(() => attempt(remainingAttempts - 1), 1000);
+                    } else {
+                        reject(err);
+                    }
+                });
+        }
+        attempt(3);
     });
 }
+    
 
 async function loadResources(selector, updateProgress) {
     console.log("starting loading resources for: ", selector);
@@ -285,7 +346,7 @@ async function loadResources(selector, updateProgress) {
                 if (updateProgress) {
                     updateProgress(elementsCount, elementsCount);
                 }
-                console.log("callback_finish for: ", selector);
+                //console.log("callback_finish for: ", selector);
                 resolve();
             }
         });
@@ -300,7 +361,7 @@ async function checkIntroFlags() {
         let skipCount = getLocalStorageValue('skipIntro');
         incrementLocalStorageValue('siteVisits');
         
-        console.log("visitCount = ", visitCount);
+        console.log("visitCount = ", visitCount, "skipCount =", skipCount);
         if (skipCount >= MAX_SKIP_COUNT) {
             resolve("skip");
         } else if (visitCount === 1) {
@@ -355,20 +416,20 @@ let startTime = 0;
 
 
 function setLoadProgress(targetProgress) {
-    console.log("starting progress update = ", targetProgress)
     if (!startTime) {
         console.error("DOM not loaded");
         return;
     }
 
     if (isAnimating) {
-        console.log("added to queue = ", targetProgress)
         animationQueue.push(targetProgress);
         return;
     }
 
     if (targetProgress > 0 && targetProgress <101) {
-        logo = document.querySelector(".lazy.logo").contentDocument
+        logo = document.querySelector(".lazy.logo").contentDocument;
+        if (!logo) return;
+
         const maskRect = logo.getElementById('maskRect');
         if (maskRect) {
             // Рассчитываем разницу и длительность
@@ -382,15 +443,12 @@ function setLoadProgress(targetProgress) {
             isAnimating = true;
 
             function onAnimationEnd() {
-                console.log("ended progress update = ", targetProgress);
                 isAnimating = false;
                 currentProgress = targetProgress;
     
                 if (animationQueue.length > 0) {
                     const nextProgress = animationQueue.shift();
-                    console.log("nextProgress = ", nextProgress);
                     if (nextProgress > targetProgress) {
-                        console.log(`${nextProgress} > ${targetProgress}`);
                         setLoadProgress(nextProgress);
                     }
                 }
@@ -409,7 +467,7 @@ function waitForProgressCompete() {
     return new Promise((resolve, reject) => {
         // **Дожидаемся завершения анимации через событие `endEvent`**
         function onAnimationEnd() {
-            console.log("waitForProgressCompete currentProgress = ", currentProgress);
+            //console.log("waitForProgressCompete currentProgress = ", currentProgress);
             if (currentProgress > 99) {
                 resubscribeAllAnimates(true);
                 resolve();
@@ -580,6 +638,7 @@ function startSlidesCycle(slidesSelector, spriteControler) {
         let current = 0;
 
         function nextFrame(spriteControler) {
+            console.log("current =", current);
             if (spriteControler) {
                 if (current >= textTimeline.length) {console.log("nextFrame exit"); return;} // Выход из рекурсии, если достигнут конец
 
@@ -622,7 +681,12 @@ function startSlidesCycle(slidesSelector, spriteControler) {
         runIntroSlidesAnimation();
         runSlideshow();
 
-        window.addEventListener('resize', () => {calcTextRows();});
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(calcTextRows, 100);
+        });
+
         calcTextRows();
 
         if (slidesCount) {
@@ -750,76 +814,70 @@ function calcTextRows() {
     return resizeTimeout;
 }
 
-async function loadMainPageResources() {
-    await loadScript("https://cdn.jsdelivr.net/npm/vanilla-lazyload@19.1.3/dist/lazyload.min.js", "LazyLoad");
-    await loadCSS("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css");
-    await loadScript("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js");
-    await loadCSS("css/style.css");
-    await loadResources(".video-banner-poster-lazy")
-        .then (() => loadResources(".video-banner-video"));
-    
-    const lazyLoad = new LazyLoad({
+async function initLazyLoad() {
+    return new Promise((resolve, reject) => {
+        const lazyLoad = new LazyLoad({
             elements_selector: ".lazy-main",
             use_native: "true"
-            });
-
-    loadCSS("css/element-icons.css");
-    //loadCSS("/css/glitch.css");
+        });
+        resolve();
+    });
 }
 
 async function enableMainPage() {
-    document.body.style.display = 'block';
-    document.body.style.overflow = 'auto';
+    return new Promise((resolve, reject) => {
+        document.body.style.display = 'block';
+        document.body.style.overflow = 'auto';
+        resolve();
+    });
 }
 
 async function showMainPage() {
-    loadMainPageResources();
-    enableMainPage();
-    
-    const mainPage = document.querySelector(".main-page");
-    const navbar = document.getElementById("mainNavbar");
-    const roundButton = document.getElementById('round-center-button');
-    
-    if (mainPage) {
-        mainPage.style.animation = 'none';
-        mainPage.style.display = 'block';
-        mainPage.offsetHeight;
-        mainPage.style.animation = 
-            'showMainPage 100ms linear forwards, reduceHeightMainPage var(--main-page-delay) ease-out forwards';
-    }
+    return new Promise((resolve, reject) => {
+        const mainPage = document.querySelector(".main-page");
+        const navbar = document.getElementById("mainNavbar");
+        const roundButton = document.getElementById('round-center-button');
         
-    if (navbar) {
-        navbar.style.animation = 'none';
-        navbar.offsetHeight;
-        navbar.style.animation = 
-            'moveDownNavBar var(--main-page-delay) ease-out 1 normal forwards';
-    }
+        if (mainPage) {
+            mainPage.style.animation = 'none';
+            mainPage.style.display = 'block';
+            mainPage.offsetHeight;
+            mainPage.style.animation = 
+                'showMainPage 100ms linear forwards, reduceHeightMainPage var(--main-page-delay) ease-out forwards';
+        }
+            
+        if (navbar) {
+            navbar.style.animation = 'none';
+            navbar.offsetHeight;
+            navbar.style.animation = 
+                'moveDownNavBar var(--main-page-delay) ease-out 1 normal forwards';
+        }
 
-    if (roundButton) {
-        roundButton.style.animation = 'none';
-        roundButton.offsetHeight;
-        roundButton.style.animation = 
-            'fadeInButton var(--main-page-delay) ease-out 1 normal forwards';
-    }
+        if (roundButton) {
+            roundButton.style.animation = 'none';
+            roundButton.offsetHeight;
+            roundButton.style.animation = 
+                'fadeInButton var(--main-page-delay) ease-out 1 normal forwards';
+        }
 
-    const mainpageTextRows = mainPage.querySelectorAll(".text-row");
-    mainpageTextRows.forEach(row => {
+        const mainpageTextRows = mainPage.querySelectorAll(".text-row");
+        mainpageTextRows.forEach(row => {
             row.style.display = 'none';  // Скрываем все слайды
             row.style.animation = 'none !important';
             row.style.transition = 'none !important';
-        }); 
+        });
 
-    
-    
+        resolve();
+    });    
 }
 
-window.addEventListener('load', () => {
+document.addEventListener('DOMContentLoaded', () => {
     if (!startTime) {
         startTime = performance.now();
     }
     
-    //loadInto();
-    (async () => { await loadInto(); })();
+    loadInto();
+    //(async () => { await loadInto(); })();
     
 
     const navbar = document.getElementById("mainNavbar");
@@ -837,16 +895,16 @@ window.addEventListener('load', () => {
     if (navbarCollapse) {
         navbarCollapse.addEventListener('show.bs.collapse', hideRoundButton);
         navbarCollapse.addEventListener('hide.bs.collapse', showRoundButton);
-        
-        function updateScrolledGradient() {
-            const videoBannerHeight = videoBanner ? videoBanner.offsetHeight : 50;
-            if (navbar) {
-                if (window.scrollY > videoBannerHeight) {
-                    navbar.classList.add("scrolled");
-                } else {
-                    navbar.classList.remove("scrolled");
-                    navbarCollapse.classList.remove("show");
-                }
+    }
+
+    function updateScrolledGradient() {
+        const videoBannerHeight = videoBanner ? videoBanner.offsetHeight : 50;
+        if (navbar) {
+            if (window.scrollY > videoBannerHeight) {
+                navbar.classList.add("scrolled");
+            } else {
+                navbar.classList.remove("scrolled");
+                navbarCollapse.classList.remove("show");
             }
         }
     }
@@ -870,7 +928,7 @@ window.addEventListener('load', () => {
     if (video) {
         video.addEventListener('canplaythrough', () => {
             const poster = document.querySelector(".video-banner-poster");
-            const videoBannerVideo = document.querySelector(".video-banner-video");
+            const videoBannerVideo = document.querySelector(".video-banner video");
             
             videoBannerVideo.style.display = "block";
             poster.style.display = "none";
