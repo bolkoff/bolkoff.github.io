@@ -89,8 +89,8 @@ const textTimeline = [
     ];
 
 async function loadInto() {
-    const controller = new AbortController(); // Контроллер для отмены
-    const { signal } = controller;
+    let controller = new AbortController(); // Контроллер для отмены
+    let { signal } = controller;
 
     intro: try {
         let loadedProgressSteps = 0;
@@ -123,7 +123,7 @@ async function loadInto() {
 
         console.log("🔹 Step 2: load zero slide css");
         await loadStep([
-            loadCSS("css/zero.css"),
+            loadCSS("css/zero.min.css"),
         ],
         signal);
 
@@ -145,7 +145,7 @@ async function loadInto() {
 
         console.log("🔹 Step 5: load main css");
         await loadStep([
-            loadCSS("css/style.css"),
+            loadCSS("css/style.min.css"),
             loadScript("https://cdnjs.cloudflare.com/ajax/libs/fitty/2.3.2/fitty.min.js", "fitty")
         ],
         signal);
@@ -194,6 +194,9 @@ async function loadInto() {
         }
     }
 
+    controller = new AbortController();
+    signal = controller.signal;
+
     try {
         console.log("🔹 Step 10: loading main page scripts");
         await loadStep([
@@ -205,7 +208,7 @@ async function loadInto() {
 
         console.log("🔹 Step 11: loading main page resources");
         await loadStep([
-            loadCSS("css/style.css"),
+            loadCSS("css/style.min.css"),
             loadResources(".video-banner-poster-lazy")
         ],
         signal);
@@ -334,19 +337,16 @@ async function loadResources(selector, updateProgress) {
                 if (!elementsCount) {
                     elementsCount = lazyLoad.toLoadCount + 1;
                 }
-                console.log("callback_loaded for: ", elem.classList);
                 if (updateProgress) {
                     updateProgress ((elementsCount - lazyLoad.toLoadCount), elementsCount);
                 }
             },
             callback_finish: (lazyInstance) => {
-                //clearTimeout(timeoutId);
                 lazyInstance.destroy();
                 elementsCount = 0;
                 if (updateProgress) {
                     updateProgress(elementsCount, elementsCount);
                 }
-                //console.log("callback_finish for: ", selector);
                 resolve();
             }
         });
@@ -739,28 +739,37 @@ function fitTextToContainer(containerSelector) {
         }
 
         function setTransformOriginToLetter(container, letter) {
-            const firstRow = container.querySelector('.text-row');
-            if (!firstRow) return;
-    
-            const letterIndex = firstRow.textContent.indexOf(letter);
-            if (letterIndex === -1) {
-                return;
-            }
-    
-            const range = document.createRange();
-            const textNode = firstRow.firstChild;
-            range.setStart(textNode, letterIndex);
-            range.setEnd(textNode, letterIndex + 1);
-    
-            const rect = range.getBoundingClientRect();
+            const rows = Array.from(container.querySelectorAll('.text-row'));
+            let totalOffsetY = 0;
             
-            // Вычисляем координаты относительно родителя
-            const originX = rect.left + rect.width/2;
-            const originY = 0 + rect.height/2;
-    
-            // Устанавливаем transform-origin
-            container.parentElement.style.transformOrigin = `${originX}px ${originY}px`;
+            for (const row of rows) {
+                if (row.textContent.includes('впечатлений')) {
+                    const letterIndex = row.textContent.indexOf(letter);
+                    if (letterIndex === -1) {
+                        totalOffsetY += row.getBoundingClientRect().height;
+                        continue;
+                    }
+                    
+                    const range = document.createRange();
+                    const textNode = row.firstChild;
+                    range.setStart(textNode, letterIndex);
+                    range.setEnd(textNode, letterIndex + 1);
+                    
+                    const rect = range.getBoundingClientRect();
+                    const parentRect = container.parentElement.getBoundingClientRect();
+                    
+                    // Рассчитываем координаты относительно родительского элемента
+                    const originX = rect.left - parentRect.left + (rect.width / 2);
+                    const originY = rect.top - parentRect.top + (rect.height / 2);
+                    
+                    // Устанавливаем transform-origin
+                    container.parentElement.style.transformOrigin = `${originX}px ${originY}px`;
+                    break;
+                }
+                totalOffsetY += row.getBoundingClientRect().height;
+            }
         }
+
   
         cleanupFitty(fittedRows);
         fittedRows = rows.map((row, index) => {return fitty(row);});
@@ -837,6 +846,7 @@ async function showMainPage() {
         const mainPage = document.querySelector(".main-page");
         const navbar = document.getElementById("mainNavbar");
         const roundButton = document.getElementById('round-center-button');
+        document.body.style.backgroundColor = "var(--text-light-color-hover)";
         
         if (mainPage) {
             mainPage.style.animation = 'none';
@@ -933,9 +943,150 @@ document.addEventListener('DOMContentLoaded', () => {
             videoBannerVideo.style.display = "block";
             poster.style.display = "none";
             video.play();
-            console.log("Started video play");
         }, { once: true });
     }
+
+    const navLinks = document.querySelectorAll('#country-tabs .nav-link');
+    const cards = document.querySelectorAll('.card-column[data-country]');
+    const offersSection = document.getElementById("offers"); // Раздел с табами
+
+
+    function getSelectedCoutry() {
+        const activeNavLink = document.querySelector('#country-tabs .nav-link.active');
+        if (activeNavLink) {
+            return activeNavLink.dataset.country;
+        }
+        return null;
+    }
+
+    function activateTabByHash(hash) {
+        const country = decodeURIComponent(hash.replace("#", ""));
+        console.log("Активируем таб:", country);
+
+        const targetTab = [...navLinks].find(link => {
+            return new URL(link.href).hash.replace("#", "") === country;
+        });
+
+        if (targetTab) {
+            targetTab.click(); // Эмулируем клик
+        }
+    }
+
+    function filterOffersByCountry(countryName) {
+        cards.forEach(card => {
+            if (card.dataset.country === countryName) {
+                card.classList.add("show");
+            }
+            else {
+                card.classList.remove("show");
+            }
+        });
+    }
+
+    function isElementInViewport(el) {
+        const rect = el.getBoundingClientRect();
+        return (
+            rect.top < window.innerHeight &&  // Верхняя граница выше нижнего края экрана
+            rect.bottom > 0                   // Нижняя граница ниже верхнего края экрана
+        );
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // Убираем активный класс у всех ссылок
+            navLinks.forEach(nav => nav.classList.remove('active'));
+            link.classList.add('active');
+            filterOffersByCountry(getSelectedCoutry());
+
+            // Обновляем URL без перезагрузки
+            const country = link.getAttribute("href").replace("#", "");
+            history.pushState(null, null, `#${encodeURIComponent(country)}`);
+
+            // Плавно скроллим к табам при загрузке
+            setTimeout(() => {
+            if (!isElementInViewport(offersSection)) {
+                offersSection.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+            }, 100);
+        });
+    });
+
+    filterOffersByCountry(getSelectedCoutry());
+
+    // Проверяем URL и эмулируем клик
+    if (window.location.hash) {
+        const hashCountry = decodeURIComponent(window.location.hash.substring(1));
+
+        activateTabByHash(hashCountry);
+    }
+
+    // Слушаем изменения URL
+    window.addEventListener('popstate', function (event) {
+        if (window.location.hash) {
+            activateTabByHash(window.location.hash);
+        }
+    });
+
+    const messageInput = document.getElementById("message-text");
+    const messengerButtons = document.querySelectorAll("button[data-messenger]");
+    const sendMsgModal = document.getElementById('messageModal');
+
+    // Функция для обновления состояния кнопок
+    function updateButtonState() {
+        const isMessageEmpty = messageInput.value.trim() === "";
+        messengerButtons.forEach(button => button.disabled = isMessageEmpty);
+    }
+    
+    function autoResize(event) {
+        const textarea = event ? event.target : messageInput; // Определяем, откуда вызвана функция
+        textarea.style.height = 'auto'; 
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
+    // Привязываем обработчик события ввода текста
+    messageInput.addEventListener('input', autoResize);
+
+    // Следим за вводом текста и обновляем состояние кнопок
+    messageInput.addEventListener("input", updateButtonState);
+
+    messengerButtons.forEach(button => {
+        button.addEventListener("click", function () {
+            const messenger = this.dataset.messenger;
+            const message = encodeURIComponent(messageInput.value.trim());
+
+            let link = "";
+
+            if (messenger === "wa") {
+                link = `https://wa.me/79219157157?text=${message}`;
+            } else if (messenger === "tg") {
+                link = `https://t.me/bolkoff?&text=${message}`;
+            }
+
+            if (link) {
+                let modal = bootstrap.Modal.getInstance(sendMsgModal);
+                if (modal) modal.hide();
+                window.open(link, "_blank"); // Открыть ссылку в новой вкладке
+            }
+        });
+    });
+
+    updateButtonState();
+    autoResize();
+
+    if (sendMsgModal) {
+        sendMsgModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget
+            const message = button.getAttribute('data-bs-message')
+            const messageInput = sendMsgModal.querySelector('#message-text')
+
+            messageInput.value = message;
+            updateButtonState();
+            setTimeout(autoResize, 100);
+        });
+    }
+
 });
 
 
