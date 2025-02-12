@@ -1,0 +1,13 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /private/
+Disallow: /tmp/
+Disallow: /js/
+Disallow: /css/
+Disallow: /.git/
+
+# Разрешаем индексацию всех остальных страниц
+Allow: /
+
+# Указываем ссылку на карту сайта
+Sitemap: https://element.travel/sitemap.xml
