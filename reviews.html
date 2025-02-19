@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="..tools/dist/bootstrap.css">
+    <link rel="stylesheet" href="css/style.css">
+    <title>Document</title>
+    <style>
+        .gradient-left,
+        .gradient-right {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: 5rem;
+          z-index: 10;
+          pointer-events: none;
+        }
+        
+        .gradient-left {
+          left: 0;
+          background: linear-gradient(to right, rgba(213, 187, 154, 0.3), transparent);
+        }
+        
+        .gradient-right {
+          right: 0;
+          background: linear-gradient(to left, rgba(213, 187, 154, 0.3), transparent);
+        }
+        
+        .reviews {
+          display: flex;
+          gap: 1.5rem;
+          overflow-x: hidden;
+          padding: 1rem;
+          scroll-behavior: smooth;
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+          justify-content: center;
+          align-items: center;
+          min-height: 400px;
+        }
+        
+        .reviews::-webkit-scrollbar {
+          display: none;
+        }
+        
+        .review-card {
+          flex: 0 0 300px;
+          background: white;
+          border-radius: 1rem;
+          padding: 1.5rem;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+          opacity: 0.5;
+          transform: scale(0.85);
+          cursor: pointer;
+          position: relative;
+        }
+        
+        @media (min-width: 768px) {
+          .review-card {
+            flex: 0 0 350px;
+          }
+        }
+        
+        .review-card.active {
+          transform: scale(1);
+          box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+          border: 2px solid rgb(213, 187, 154);
+          opacity: 1;
+          z-index: 2;
+        }
+        
+        .review-card:not(.active) {
+          filter: blur(2px);
+        }
+        
+        .review-header {
+          display: flex;
+          align-items: center;
+          margin-bottom: 1rem;
+        }
+        
+        .avatar {
+          width: 3.5rem;
+          height: 3.5rem;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 2px solid rgb(213, 187, 154);
+          transition: transform 0.3s ease;
+        }
+        
+        .active .avatar {
+          transform: scale(1.1);
+        }
+        
+        .review-info {
+          margin-left: 1rem;
+          flex-grow: 1;
+        }
+        
+        .name {
+          color: black;
+          font-weight: 600;
+          margin-bottom: 0.25rem;
+        }
+        
+        .trip-description {
+          color: #007296;
+          font-size: 0.9rem;
+          font-style: italic;
+        }
+        
+        .social-link {
+          color: #007296;
+          text-decoration: none;
+          transition: all 0.3s ease;
+          padding: 0.5rem;
+          border-radius: 50%;
+        }
+        
+        .social-link:hover {
+          color: rgb(213, 187, 154);
+          background: rgba(213, 187, 154, 0.1);
+          transform: scale(1.1);
+        }
+        
+        .review-text {
+          color: #333;
+          line-height: 1.6;
+          position: relative;
+          max-height: 7.2em;
+          overflow: hidden;
+          transition: max-height 0.5s ease;
+        }
+        
+        .review-card.expanded .review-text {
+          max-height: none;
+        }
+        
+        .read-more {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          background: linear-gradient(to left, white 50%, transparent);
+          padding: 0.25rem 0;
+          color: #007296;
+          cursor: pointer;
+          font-weight: 500;
+          font-size: 0.9rem;
+        }
+        
+        .navigation {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 1rem;
+          margin-top: 2rem;
+        }
+        
+        .nav-button {
+          background: #007296;
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 3rem;
+          height: 3rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s ease;
+          font-size: 1.2rem;
+        }
+        
+        .nav-button:hover {
+          background: rgb(213, 187, 154);
+          transform: scale(1.1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .counter {
+          font-size: 1.1rem;
+          color: #007296;
+          font-weight: 600;
+          min-width: 80px;
+          text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+          body {
+            padding: 1rem;
+          }
+        
+          .reviews {
+            gap: 1rem;
+            padding: 0.5rem;
+          }
+        
+          .review-card {
+            padding: 1rem;
+          }
+        
+          h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+          }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid background-section m-0 px-0 py-5">
+        <h2>What Our Travelers Say</h2>
+        <div class="reviews-container">
+        <div class="gradient-left"></div>
+        <div class="gradient-right"></div>
+        <div class="reviews" id="reviewsContainer"></div>
+        </div>
+        <div class="navigation">
+        <button class="nav-button" id="prevButton">←</button>
+        <div class="counter" id="counter">1 / 5</div>
+        <button class="nav-button" id="nextButton">→</button>
+        </div>
+    </div>
+</body>
+<script>
+    const reviews = [
+    {
+      id: 1,
+      name: "Sarah Mitchell",
+      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop",
+      text: "The trip to Bali was absolutely magical! The local guides were knowledgeable and friendly. Would definitely book again! The accommodations exceeded our expectations, and the cultural experiences were unforgettable. Every detail was perfectly planned, from the airport transfers to the daily excursions. The highlight was definitely the traditional cooking class where we learned to make authentic Balinese dishes.",
+      tripDescription: "Bali Cultural Experience",
+      socialPlatform: "instagram",
+      socialLink: "https://instagram.com/sarahtravels"
+    },
+    {
+      id: 2,
+      name: "James Wilson",
+      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop",
+      text: "Incredible experience in the Swiss Alps. Every detail was perfectly planned. The accommodations were top-notch! The hiking trails were well-chosen for our skill level, and the mountain guides shared fascinating insights about the local flora and fauna. The evening fondue experience in a traditional Swiss chalet was particularly memorable.",
+      tripDescription: "Swiss Alps Adventure",
+      socialPlatform: "twitter",
+      socialLink: "https://twitter.com/jameswanderlust"
+    },
+    {
+      id: 3,
+      name: "Emma Rodriguez",
+      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop",
+      text: "Our safari in Tanzania exceeded all expectations. Saw the big five and stayed in amazing luxury camps! The sunrise hot air balloon ride over the Serengeti was breathtaking, and our guide's knowledge of wildlife behavior made each game drive an educational adventure. The luxury tented camps provided the perfect blend of comfort and authentic safari experience.",
+      tripDescription: "Tanzania Safari Expedition",
+      socialPlatform: "instagram",
+      socialLink: "https://instagram.com/emmatravels"
+    },
+    {
+      id: 4,
+      name: "David Chen",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop",
+      text: "The Greek Islands tour was phenomenal. Perfect mix of history, culture, and relaxation. Highly recommended! The private yacht tour around Santorini's caldera was a highlight, and the local food tours introduced us to amazing family-run tavernas. The historical tours were led by knowledgeable archaeologists who brought ancient sites to life.",
+      tripDescription: "Greek Islands Discovery",
+      socialPlatform: "twitter",
+      socialLink: "https://twitter.com/davidexplores"
+    },
+    {
+      id: 5,
+      name: "Lisa Thompson",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop",
+      text: "Amazing journey through Japan! The attention to detail and local experiences were unforgettable. From the traditional ryokan stays to the modern bullet trains, everything was perfectly orchestrated. The private tea ceremony in Kyoto and the sushi-making class in Tokyo were incredible cultural experiences that we'll never forget.",
+      tripDescription: "Japan Cultural Journey",
+      socialPlatform: "instagram",
+      socialLink: "https://instagram.com/lisaadventures"
+    }
+  ];
+  
+  function getSocialIcon(platform) {
+    return platform === 'instagram' ? '📸' : '🐦';
+  }
+  
+  function createReviewCard(review) {
+    return `
+      <div class="review-card" data-review-id="${review.id}">
+        <div class="review-header">
+          <img src="${review.avatar}" alt="${review.name}" class="avatar">
+          <div class="review-info">
+            <div class="name">${review.name}</div>
+            <div class="trip-description">${review.tripDescription}</div>
+          </div>
+          <a href="${review.socialLink}" target="_blank" rel="noopener noreferrer" class="social-link">
+            ${getSocialIcon(review.socialPlatform)}
+          </a>
+        </div>
+        <div class="review-text">
+          ${review.text}
+          <span class="read-more">Read more</span>
+        </div>
+      </div>
+    `;
+  }
+  
+  let currentIndex = 0;
+  
+  function updateCounter() {
+    const counter = document.getElementById('counter');
+    counter.textContent = `${currentIndex + 1} / ${reviews.length}`;
+  }
+  
+  function getReviewsForDisplay(centerIndex) {
+    const result = [];
+    const totalReviews = reviews.length;
+    
+    // Add previous reviews
+    for (let i = -2; i < 0; i++) {
+      let index = centerIndex + i;
+      if (index < 0) index = totalReviews + index;
+      result.push(reviews[index]);
+    }
+    
+    // Add current review
+    result.push(reviews[centerIndex]);
+    
+    // Add next reviews
+    for (let i = 1; i <= 2; i++) {
+      let index = (centerIndex + i) % totalReviews;
+      result.push(reviews[index]);
+    }
+    
+    return result;
+  }
+  
+  function scrollToReview(index, direction = 'next') {
+    const container = document.getElementById('reviewsContainer');
+    
+    // Normalize index
+    if (index < 0) index = reviews.length - 1;
+    if (index >= reviews.length) index = 0;
+    
+    // Update display
+    const displayReviews = getReviewsForDisplay(index);
+    container.innerHTML = displayReviews.map(review => createReviewCard(review)).join('');
+    
+    // Update active state
+    const cards = container.querySelectorAll('.review-card');
+    cards.forEach((card, i) => {
+      if (i === 2) card.classList.add('active');
+    });
+    
+    currentIndex = index;
+    updateCounter();
+    
+    // Add click handlers for read more
+    cards.forEach(card => {
+      const readMore = card.querySelector('.read-more');
+      if (readMore) {
+        readMore.addEventListener('click', (e) => {
+          e.stopPropagation();
+          card.classList.toggle('expanded');
+          readMore.textContent = card.classList.contains('expanded') ? 'Read less' : 'Read more';
+        });
+      }
+    });
+  }
+  
+  function initReviews() {
+    const container = document.getElementById('reviewsContainer');
+    const prevButton = document.getElementById('prevButton');
+    const nextButton = document.getElementById('nextButton');
+  
+    prevButton.addEventListener('click', () => {
+      scrollToReview(currentIndex - 1, 'prev');
+    });
+  
+    nextButton.addEventListener('click', () => {
+      scrollToReview(currentIndex + 1, 'next');
+    });
+  
+    // Handle keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') prevButton.click();
+      if (e.key === 'ArrowRight') nextButton.click();
+    });
+  
+    // Initial setup
+    scrollToReview(currentIndex);
+  }
+  
+  document.addEventListener('DOMContentLoaded', initReviews);
+</script>
+</html>
